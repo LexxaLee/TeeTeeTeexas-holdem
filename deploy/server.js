@@ -83,6 +83,7 @@ class Room {
     this.bigBlind = config.bigBlind || ROOM_CONFIG.DEFAULT_BIG_BLIND;
     this.initialChips = config.initialChips || ROOM_CONFIG.DEFAULT_INITIAL_CHIPS;
     this.maxPlayers = Math.max(2, Math.min(9, config.maxPlayers || ROOM_CONFIG.DEFAULT_MAX_PLAYERS));
+    this.aiCount = config.aiCount != null ? Math.max(0, Math.min(config.aiCount, this.maxPlayers - 1)) : (this.maxPlayers - 1);
     this.aiDifficulty = config.aiDifficulty != null ? config.aiDifficulty : AI_DIFFICULTY.NORMAL;
     this.allowAIFill = config.allowAIFill !== false;
 
@@ -175,7 +176,8 @@ class Room {
 
     const roster = humans.slice();
     let aiSeq = 0;
-    while (roster.length < this.maxPlayers) {
+    const targetTotal = Math.min(this.maxPlayers, humans.length + this.aiCount);
+    while (roster.length < targetTotal) {
       let ai = [...this.members.values()].find(m => m.isAI && !roster.includes(m));
       if (!ai) ai = this._createAIMember(aiSeq++);
       roster.push(ai);
