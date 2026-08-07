@@ -175,9 +175,9 @@ class Room {
     if (humans.length === 0) return;
 
     const roster = humans.slice();
-    let aiSeq = 0;
-    const targetTotal = Math.min(this.maxPlayers, humans.length + this.aiCount);
+      const targetTotal = Math.min(this.maxPlayers, humans.length + this.aiCount);
     while (roster.length < targetTotal) {
+
       let ai = [...this.members.values()].find(m => m.isAI && !roster.includes(m));
       if (!ai) ai = this._createAIMember(aiSeq++);
       roster.push(ai);
