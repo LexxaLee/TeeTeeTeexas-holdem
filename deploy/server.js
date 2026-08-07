@@ -441,12 +441,15 @@ wss.on('connection', (ws) => {
         break;
       }
 
-      case 'joinRoom': {
-        const target = rooms.get(message.roomId);
+          case 'joinRoom': {
+        let target = rooms.get(message.roomId);
         if (!target) {
-          ws.send(JSON.stringify({ type: 'error', message: 'Room not found' }));
-          return;
+          // 房间不存在（常见于服务器休眠后内存清空）：自动创建，加入者先占位等待好友
+          console.log('joinRoom: 房间', message.roomId, '不存在，自动创建');
+          target = new Room(message.roomId, message.config || {}, clientId);
+          rooms.set(message.roomId, target);
         }
+
         const pid = (message.playerInfo && message.playerInfo.playerId) || clientId;
         target.addHuman(pid, message.playerInfo, clientId, ws);
         currentRoom = message.roomId;
