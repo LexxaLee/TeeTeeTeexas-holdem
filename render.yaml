@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: texas-holdem-server
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: node deploy/server.js
+    healthCheckPath: /
+    autoDeploy: true
+    envVars:
+      - key: PORT
+        value: 10000

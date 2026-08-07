@@ -1,0 +1,12 @@
+# Dependencies (installed by Render via `npm install`)
+node_modules/
+deploy/node_modules/
+server/node_modules/
+
+# CloudStudio leftover build (not used by Render)
+deploy/dist/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.log

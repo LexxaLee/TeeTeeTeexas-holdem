@@ -1,0 +1,12 @@
+{
+  "name": "texas-holdem-deploy",
+  "version": "1.0.0",
+  "description": "Texas Hold'em combined HTTP + WebSocket server (browser client + online game)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "ws": "^8.21.2"
+  }
+}

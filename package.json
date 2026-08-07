@@ -1,0 +1,13 @@
+{
+  "name": "texas-holdem-server",
+  "version": "1.0.0",
+  "description": "德州扑克联机房权威服务器（好友线上对战）",
+  "main": "server/server.js",
+  "scripts": {
+    "start": "node server/server.js",
+    "test:online": "node test/test_online.js"
+  },
+  "dependencies": {
+    "ws": "^8.21.2"
+  }
+}
