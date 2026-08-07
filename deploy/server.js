@@ -83,6 +83,7 @@ class Room {
     this.bigBlind = config.bigBlind || ROOM_CONFIG.DEFAULT_BIG_BLIND;
     this.initialChips = config.initialChips || ROOM_CONFIG.DEFAULT_INITIAL_CHIPS;
     this.maxPlayers = Math.max(2, Math.min(9, config.maxPlayers || ROOM_CONFIG.DEFAULT_MAX_PLAYERS));
+    // aiCount：房主期望的固定AI数量；其余座位留作好友空位（不自动填AI）
     this.aiCount = config.aiCount != null ? Math.max(0, Math.min(config.aiCount, this.maxPlayers - 1)) : (this.maxPlayers - 1);
     this.aiDifficulty = config.aiDifficulty != null ? config.aiDifficulty : AI_DIFFICULTY.NORMAL;
     this.allowAIFill = config.allowAIFill !== false;
@@ -175,9 +176,10 @@ class Room {
     if (humans.length === 0) return;
 
     const roster = humans.slice();
-      const targetTotal = Math.min(this.maxPlayers, humans.length + this.aiCount);
+    let aiSeq = 0;
+    // 只填充到「人类数 + 期望AI数」，剩余座位留给好友（不自动填AI）
+    const targetTotal = Math.min(this.maxPlayers, humans.length + this.aiCount);
     while (roster.length < targetTotal) {
-
       let ai = [...this.members.values()].find(m => m.isAI && !roster.includes(m));
       if (!ai) ai = this._createAIMember(aiSeq++);
       roster.push(ai);
@@ -443,7 +445,7 @@ wss.on('connection', (ws) => {
         break;
       }
 
-          case 'joinRoom': {
+      case 'joinRoom': {
         let target = rooms.get(message.roomId);
         if (!target) {
           // 房间不存在（常见于服务器休眠后内存清空）：自动创建，加入者先占位等待好友
@@ -451,7 +453,6 @@ wss.on('connection', (ws) => {
           target = new Room(message.roomId, message.config || {}, clientId);
           rooms.set(message.roomId, target);
         }
-
         const pid = (message.playerInfo && message.playerInfo.playerId) || clientId;
         target.addHuman(pid, message.playerInfo, clientId, ws);
         currentRoom = message.roomId;
