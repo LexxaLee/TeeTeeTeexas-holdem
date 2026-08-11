@@ -113,6 +113,14 @@ class Room {
       if (info && info.name) m.name = info.name;
       if (info && info.avatar) m.avatar = info.avatar;
     } else {
+      // 真人入场筹码：优先采用客户端带来的“账户余额”(info.startingChips)，
+      // 使线上桌面筹码与本地账户一致；未携带时回退为房间初始筹码（向后兼容）。
+      // 同时做上限保护，避免异常值破坏牌桌。
+      let balance = this.initialChips;
+      const sc = info && info.startingChips;
+      if (typeof sc === 'number' && isFinite(sc)) {
+        balance = Math.max(0, Math.min(Math.floor(sc), 10000000));
+      }
       m = {
         playerId,
         name: (info && info.name) || ('Player' + playerId.slice(-4)),
@@ -122,7 +130,7 @@ class Room {
         clientId,
         ws,
         connected: true,
-        balance: this.initialChips
+        balance: balance
       };
       this.members.set(playerId, m);
     }
