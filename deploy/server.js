@@ -185,6 +185,11 @@ class Room {
       roster.push(ai);
     }
 
+    // 人数不足（典型场景：2 人房、0 AI，暂时只有房主一人）：
+    // 不开无意义的一人局，保持空桌等待好友加入后再开局。
+    // 否则房主会空转一人局、好友加入还得等一整局才能参战。
+    if (roster.length < 2) return;
+
     this.game = new PokerGame({
       smallBlind: this.smallBlind,
       bigBlind: this.bigBlind,
