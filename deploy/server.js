@@ -95,6 +95,7 @@ class Room {
     this.handInProgress = false;
     this.nextHandTimer = null;
     this.aiTimer = null;
+    this.handNumber = 0; // 局数计数：每开一手 +1，客户端用它做历史/记账去重
   }
 
   memberByClient(clientId) {
@@ -220,6 +221,7 @@ class Room {
 
     this.handInProgress = true;
     this.game.startNewHand();
+    this.handNumber++; // 新一手开始，局数 +1
     this._broadcastState();
     this._tick();
   }
@@ -359,6 +361,7 @@ class Room {
     return {
       type: 'state',
       roomId: this.id,
+      handNumber: this.handNumber,
       phase: game.phase,
       communityCards: game.communityCards.map(c => ({ rank: c.rank, suit: c.suit })),
       potTotal: game.isHandOver ? 0 : Math.floor(game.pot.totalAmount),
@@ -496,6 +499,19 @@ wss.on('connection', (ws) => {
         if (currentRoom) {
           const r = rooms.get(currentRoom);
           if (r) r.handleAction(clientId, message.action, message.amount);
+        }
+        break;
+      }
+
+      case 'requestNextHand': {
+        // 联机：玩家手动点击“下一局”。若本局已结束则立即开下一局，
+        // 同时取消 6 秒自动兜底定时器（避免重复开）。自带 6 秒自动兜底防止卡死。
+        if (currentRoom) {
+          const r = rooms.get(currentRoom);
+          if (r && r.game && r.game.isHandOver) {
+            if (r.nextHandTimer) { clearTimeout(r.nextHandTimer); r.nextHandTimer = null; }
+            r.startNextHand();
+          }
         }
         break;
       }
