@@ -130,7 +130,7 @@ class Room {
   }
 
   _createAIMember(seq) {
-    const names = ['Zhuge', 'Caocao', 'Libai', 'Heshen', 'Zhouyu', 'Hanxin', 'Napoleon', 'Newton'];
+    const names = ['诸葛亮', '曹操', '李白', '和珅', '周瑜', '韩信', '岳飞', '孙权'];
     const id = 'ai_' + this.id + '_' + seq;
     const m = {
       playerId: id,
@@ -361,6 +361,7 @@ class Room {
       revealedHands: game.isHandOver ? this._serializeRevealed(game) : {},
       winners: game.winners.map(w => ({
         playerId: w.player ? w.player.id : (w.playerId || ''),
+        playerName: w.player ? w.player.name : (w.playerName || ''),
         amount: Math.floor(w.amount),
         handRankName: w.hand ? HAND_RANK_NAMES[w.hand.rank] : (w.handRankName || '')
       }))
@@ -466,7 +467,15 @@ wss.on('connection', (ws) => {
         target.broadcast({ type: 'playerJoined', playerId: pid, playerInfo: message.playerInfo }, clientId);
         const snap = target._buildSnapshotFor(target.members.get(pid));
         if (snap) ws.send(JSON.stringify(snap));
-        if (!target.handInProgress) target.startNextHand();
+        // 好友中途加入：立即结束当前这手并重发新一手，让新玩家直接参与对局
+        // （成员余额按入局前金额保存，中途重发不会丢失筹码）
+        if (target.handInProgress) {
+          if (target.aiTimer) { clearTimeout(target.aiTimer); target.aiTimer = null; }
+          if (target.nextHandTimer) { clearTimeout(target.nextHandTimer); target.nextHandTimer = null; }
+          target.handInProgress = false;
+          if (target.game) target.game.isHandOver = true;
+        }
+        target.startNextHand();
         break;
       }
 
