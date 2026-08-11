@@ -238,7 +238,9 @@ class Room {
       this.handInProgress = false;
       this._broadcastState();
       if (this.nextHandTimer) clearTimeout(this.nextHandTimer);
-      this.nextHandTimer = setTimeout(() => this.startNextHand(), 6000);
+      // 自动开下一局的兜底时间：缩短到 3 秒，手感更跟手
+      // （仍保留：玩家点“下一局”会立即开，并清除这个定时器）
+      this.nextHandTimer = setTimeout(() => this.startNextHand(), 3000);
       return;
     }
 
@@ -504,13 +506,18 @@ wss.on('connection', (ws) => {
       }
 
       case 'requestNextHand': {
-        // 联机：玩家手动点击“下一局”。若本局已结束则立即开下一局，
-        // 同时取消 6 秒自动兜底定时器（避免重复开）。自带 6 秒自动兜底防止卡死。
+        // 联机：玩家手动点击“下一局”。优先级最高，立即开下一局：
+        //  - 本局已结束（最常见）；
+        //  - 或当前没有进行中的牌局（如中途有人离场/服务器休眠后房间变空导致卡住）。
+        // 只要还有真人连接就开，否则忽略。同时取消 3 秒自动兜底定时器，避免重复开。
         if (currentRoom) {
           const r = rooms.get(currentRoom);
-          if (r && r.game && r.game.isHandOver) {
+          if (r) {
             if (r.nextHandTimer) { clearTimeout(r.nextHandTimer); r.nextHandTimer = null; }
-            r.startNextHand();
+            const canStart = (r.game && r.game.isHandOver) || !r.handInProgress;
+            if (canStart && r.connectedHumans().length > 0) {
+              r.startNextHand();
+            }
           }
         }
         break;
